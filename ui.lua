@@ -1,11 +1,9 @@
 local library = {}
 
 library.accents = {
-    Accent = Color3.fromRGB(84, 101, 255),
+    Accent = Color3.fromRGB(255, 50, 50),
     LightAccent = Color3.fromRGB(79, 95, 239),
-    DarkAccent = Color3.fromRGB(56, 67, 163),
-    ImageColor = Color3.fromRGB(84, 101, 255),
-    BorderColor = Color3.fromRGB(84, 101, 255)
+    DarkAccent = Color3.fromRGB(56, 67, 163)
 }
 
 function library:create_corner(parent, radius)
@@ -17,8 +15,6 @@ end
 
 function library:update_accent(color)
     library.accents.Accent = color
-    library.accents.ImageColor = color
-    library.accents.BorderColor = color
     library.accents.LightAccent = Color3.new(
         math.clamp(color.R + 0.1, 0, 1),
         math.clamp(color.G + 0.1, 0, 1),
@@ -32,14 +28,9 @@ function library:update_accent(color)
 
     -- Update all UI elements using accents
     for _, obj in pairs(library.colored) do
-        if obj.ClassName == "Frame" then
-            if obj.Name == "Line" then
-                obj.BackgroundColor3 = color
-            end
-            if obj.BorderMode == Enum.BorderMode.Outline then
-                obj.BorderColor3 = color
-            end
-        elseif obj.ClassName == "TextButton" or obj.ClassName == "TextLabel" then
+        if obj.ClassName == "Frame" or obj.ClassName == "TextButton" then
+            obj.BorderColor3 = color
+        elseif obj.ClassName == "TextLabel" or obj.ClassName == "TextBox" then
             obj.TextColor3 = color
         elseif obj.ClassName == "ImageLabel" or obj.ClassName == "ImageButton" then
             obj.ImageColor3 = color
@@ -74,19 +65,6 @@ function library:create(Object, Properties, Parent)
         if not library.colored then library.colored = {} end
         table.insert(library.colored, Obj)
         Properties.TrackColor = nil
-    end
-
-    -- Add properties that should be colored by default
-    if Object == "Frame" and Properties.Name == "Line" then
-        Properties.BackgroundColor3 = library.accents.Accent
-        if not library.colored then library.colored = {} end
-        table.insert(library.colored, Obj)
-    end
-
-    if Properties.BorderMode == Enum.BorderMode.Outline then
-        Properties.BorderColor3 = library.accents.BorderColor
-        if not library.colored then library.colored = {} end
-        table.insert(library.colored, Obj)
     end
 
     for i,v in pairs (Properties) do
@@ -169,16 +147,6 @@ function library:set_draggable(gui)
     end)
 end
 
-function library:create_loading_animation(element, delay)
-    element.BackgroundTransparency = 1
-    element.TextTransparency = 1
-    
-    game:GetService("TweenService"):Create(element, 
-        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
-        {BackgroundTransparency = 0, TextTransparency = 0}
-    ):Play()
-end
-
 function library.new(library_title, cfg_location)
     local menu = {}
     menu.values = {}
@@ -191,6 +159,16 @@ function library.new(library_title, cfg_location)
     function menu.copy(original)
         local copy = {}
         for k, v in pairs(original) do
+            if type(v) == "table" then
+                v = menu.copy(v)
+            end
+            copy[k] = v
+        end
+        return copy
+    end
+    function menu.save_cfg(cfg_name)
+        local values_copy = menu.copy(menu.values)
+        for _,tab in next, values_copy do
             for _,section in next, tab do
                 for _,sector in next, section do
                     for _,element in next, sector do
@@ -275,15 +253,12 @@ function library.new(library_title, cfg_location)
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundColor3 = Color3.fromRGB(15, 15, 15),
-        BorderColor3 = library.accents.BorderColor,
+        BorderColor3 = Color3.fromRGB(78, 93, 234),
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 700, 0, 500),
         Image = "http://www.roblox.com/asset/?id=7300333488",
         AutoButtonColor = false,
         Modal = true,
-        NeedCorners = true,
-        CornerRadius = 12,
-        TrackColor = true
     }, ScreenGui)
 
     function menu.GetPosition()
@@ -403,29 +378,6 @@ end
 
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
-
-            -- Fade out old tab
-            for _, element in pairs(Tabs:GetChildren()) do
-                if element.Visible then
-                    library:tween(element, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 1
-                    })
-                end
-            end
-
-            -- Fade in new tab
-            Tab.BackgroundTransparency = 1
-            Tab.Visible = true
-            library:tween(Tab, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0
-            })
-
-            -- Animate all elements in the new tab
-            for _, element in pairs(Tab:GetDescendants()) do
-                if element:IsA("Frame") or element:IsA("TextLabel") or element:IsA("TextButton") then
-                    library:create_loading_animation(element, 0.3)
-                end
-            end
 
             for _,TButtons in pairs (TabButtons:GetChildren()) do
                 if not TButtons:IsA("TextButton") then continue end
@@ -619,7 +571,6 @@ end
                         Position = UDim2.new(0.5, 0, 0.5, 0),
                         AnchorPoint = Vector2.new(0.5, 0.5),
                         Size = UDim2.new(1, 0, 0, thickness),
-                        TrackColor = true
                     }, LineFrame)
                 end
 
@@ -677,7 +628,7 @@ end
                             Position = UDim2.new(0, 9, 0.5, 0),
                             Size = UDim2.new(0, 14, 0, 14),
                             NeedCorners = true,
-                            CornerRadius = 6, -- Updated corner radius
+                            CornerRadius = 7,
                             TrackColor = true
                         }, ToggleButton)
 
@@ -698,16 +649,10 @@ end
                             menu.values[tab.tab_num][section_name][sector_name][flag] = value
 
                             if value.Toggle then
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                                    BackgroundColor3 = library.accents.Accent,
-                                    Size = UDim2.new(0, 14, 0, 14)
-                                })
+                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = library.accents.Accent, Size = UDim2.new(0, 14, 0, 14)})
                                 library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
                             else
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                                    BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-                                    Size = UDim2.new(0, 14, 0, 14)
-                                })
+                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 30), Size = UDim2.new(0, 14, 0, 14)})
                                 if not mouse_in then
                                     library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
                                 end
@@ -967,11 +912,11 @@ end
                                 BackgroundColor3 = Color3.fromRGB(255, 28, 28),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 265, 0.5, 0),
-                                Size = UDim2.new(0, 25, 0, 25), -- Smaller size
+                                Size = UDim2.new(0, 35, 0, 35), -- Made square
                                 AutoButtonColor = false,
                                 Text = "",
                                 NeedCorners = true,
-                                CornerRadius = 12, -- Makes it circular
+                                CornerRadius = 20, -- Makes it circular
                                 TrackColor = true
                             }, ToggleButton)
 
