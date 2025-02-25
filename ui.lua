@@ -17,7 +17,7 @@ end
 
 function library:update_accent(color)
     library.accents.Accent = color
-    library.accents.ImageColor = color
+    library.accents.ImageColor3 = color 
     library.accents.BorderColor = color
     library.accents.LightAccent = Color3.new(
         math.clamp(color.R + 0.1, 0, 1),
@@ -33,19 +33,23 @@ function library:update_accent(color)
     -- Update all UI elements using accents
     for _, obj in pairs(library.colored) do
         if obj.ClassName == "Frame" then
-            if obj.Name == "Line" then
+            if obj.Name == "Line" or obj.Name == "SliderFrame" then
                 obj.BackgroundColor3 = color
             end
             if obj.BorderMode == Enum.BorderMode.Outline then
                 obj.BorderColor3 = color
             end
         elseif obj.ClassName == "TextButton" or obj.ClassName == "TextLabel" then
-            obj.TextColor3 = color
+            if obj.Name ~= "ButtonText" then
+                obj.TextColor3 = color
+            end
         elseif obj.ClassName == "ImageLabel" or obj.ClassName == "ImageButton" then
             obj.ImageColor3 = color
+        elseif obj.ClassName == "ScrollingFrame" then
+            obj.ScrollBarImageColor3 = color
         elseif obj.ClassName == "UIGradient" then
             obj.Color = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, library.accents.LightAccent), 
+                ColorSequenceKeypoint.new(0, library.accents.LightAccent),
                 ColorSequenceKeypoint.new(1, library.accents.DarkAccent)
             }
         end
@@ -984,14 +988,15 @@ end
 
                             local ColorPicker = library:create("ImageButton", {
                                 Name = "ColorPicker",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                                BackgroundColor3 = Color3.fromRGB(25, 25, 25), -- Match background
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 40, 0, 10),
                                 Size = UDim2.new(0, 150, 0, 150),
                                 AutoButtonColor = false,
                                 Image = "rbxassetid://4155801252",
-                                ImageColor3 = Color3.fromRGB(255, 0, 4),
+                                ImageColor3 = library.accents.Accent,
                                 ZIndex = 2,
+                                TrackColor = true
                             }, ColorFrame)
 
                             local ColorPick = library:create("Frame", {
@@ -1004,13 +1009,14 @@ end
 
                             local HuePicker = library:create("TextButton", {
                                 Name = "HuePicker",
-                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+                                BackgroundColor3 = library.accents.Accent,
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 10, 0, 10),
                                 Size = UDim2.new(0, 20, 0, 150),
                                 ZIndex = 2,
                                 AutoButtonColor = false,
                                 Text = "",
+                                TrackColor = true
                             }, ColorFrame)
 
                             local UIGradient = library:create("UIGradient", {
@@ -1021,12 +1027,6 @@ end
                                     ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 0, 255)),
                                     ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
                                     ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 0)),
-                                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 255, 0)),
-                                    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
-                                }
-                            }, HuePicker)
-
-                            local HuePick = library:create("ImageButton", {
                                 Name = "HuePick",
                                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
