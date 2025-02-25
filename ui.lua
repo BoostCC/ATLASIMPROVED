@@ -404,41 +404,37 @@ end
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
 
-            -- Fade out old tab
+            -- Change tab visibility without fading
             for _, element in pairs(Tabs:GetChildren()) do
-                if element.Visible then
-                    library:tween(element, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                        BackgroundTransparency = 1
-                    })
-                end
+                element.Visible = false
             end
 
-            -- Fade in new tab
-            Tab.BackgroundTransparency = 1
-            Tab.Visible = true
-            library:tween(Tab, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0
-            })
+            -- Set new tab visible
+            Tab.Visible = true 
 
-            -- Animate all elements in the new tab
+            -- Update tab button colors
+            for _, TButtons in pairs(TabButtons:GetChildren()) do
+                if not TButtons:IsA("TextButton") then continue end
+                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                    {ImageColor3 = Color3.fromRGB(100, 100, 100)})
+            end
+
+            -- Update selected tab
+            selected_tab = TabButton
+            library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                {ImageColor3 = Color3.fromRGB(84, 101, 255)})
+
+            -- Animate new tab elements
             for _, element in pairs(Tab:GetDescendants()) do
                 if element:IsA("Frame") or element:IsA("TextLabel") or element:IsA("TextButton") then
-                    library:create_loading_animation(element, 0.3)
+                    element.BackgroundTransparency = 1
+                    element.TextTransparency = 1
+                    library:tween(element, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                        {BackgroundTransparency = 0, TextTransparency = 0})
                 end
             end
-
-            for _,TButtons in pairs (TabButtons:GetChildren()) do
-                if not TButtons:IsA("TextButton") then continue end
-
-                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)})
-            end
-            for _,Tab in pairs (Tabs:GetChildren()) do
-                Tab.Visible = false
-            end
-            Tab.Visible = true
-            selected_tab = TabButton
-            library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(84, 101, 255)})
         end)
+
         TabButton.MouseEnter:Connect(function()
             if selected_tab == TabButton then return end
 
