@@ -8,13 +8,6 @@ library.accents = {
     BorderColor = Color3.fromRGB(84, 101, 255)
 }
 
-local function safeCallback(callback, ...)
-    if type(callback) == "function" then
-        return callback(...)
-    end
-    return nil
-end
-
 function library:create_corner(parent, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or 4)
@@ -64,15 +57,7 @@ function library:update_accent(color)
 end
 
 local TweenService = game:GetService("TweenService")
-function library:tween(...)
-    local args = {...}
-    if #args < 2 then return end
-    
-    local instance = args[1]
-    if not instance or type(instance) ~= "userdata" then return end
-    
-    return TweenService:Create(...):Play()
-end
+function library:tween(...) TweenService:Create(...):Play() end
 
 local uis = game:GetService("UserInputService")
 
@@ -199,13 +184,6 @@ function library:create_loading_animation(element, delay)
 end
 
 function library.new(library_title, cfg_location)
-    if not library_title then 
-        library_title = "New Window"
-    end
-    if not cfg_location then
-        cfg_location = "config"
-    end
-
     local menu = {}
     menu.values = {}
     menu.on_load_cfg = library.signal.new("on_load_cfg")
@@ -430,21 +408,11 @@ end
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
 
-            -- Hide all other tabs first
+            -- Hide all tabs
             for _, OtherTab in pairs(Tabs:GetChildren()) do
                 if OtherTab:IsA("Frame") then
+                    OtherTab.BackgroundTransparency = 1
                     OtherTab.Visible = false
-                    -- Reset transparencies
-                    for _, element in pairs(OtherTab:GetDescendants()) do
-                        if element:IsA("Frame") then
-                            element.BackgroundTransparency = 0
-                        elseif element:IsA("TextLabel") or element:IsA("TextButton") then
-                            element.TextTransparency = 0
-                            if element.Name ~= "ButtonText" then
-                                element.BackgroundTransparency = 0
-                            end
-                        end
-                    end
                 end
             end
 
@@ -455,11 +423,25 @@ end
                     {ImageColor3 = Color3.fromRGB(100, 100, 100)})
             end
 
-            -- Show new tab and update selected
-            Tab.Visible = true
+            -- Update selected tab and show new tab
             selected_tab = TabButton
+            Tab.BackgroundTransparency = 1
+            Tab.Visible = true
+            
+            -- Update tab image color
             library:tween(TabImage, TweenInfo.new(0.2), 
                 {ImageColor3 = Color3.fromRGB(84, 101, 255)})
+
+            -- Reset transparency for tab elements
+            for _, element in pairs(Tab:GetDescendants()) do
+                    if element:IsA("Frame") then
+                    element.BackgroundTransparency = 0
+                elseif element:IsA("TextLabel") or element:IsA("TextButton") then
+                    if element.BackgroundTransparency == 1 then continue end
+                    element.BackgroundTransparency = 0
+                    element.TextTransparency = 0
+                end
+            end
         end)
 
         TabButton.MouseEnter:Connect(function()
@@ -656,7 +638,7 @@ end
 
                     local function do_callback()
                         menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                        safeCallback(callback, value)
+                        callback(value)
                     end
 
                     local default = data.default and data.default
@@ -918,7 +900,7 @@ end
                             end)
                             uis.InputEnded:Connect(function(input)
                                 if extra_value.Key ~= nil and not is_binding then
-                                    local key = input.KeyCode.Name ~= "Unknown" and input.UserInputType.Name or input.UserInputType.Name
+                                    local key = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
                                     if key == extra_value.Key then
                                         if extra_value.Type == "Hold" then
                                             extra_value.Active = false
