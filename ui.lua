@@ -17,7 +17,7 @@ end
 
 function library:update_accent(color)
     library.accents.Accent = color
-    library.accents.ImageColor3 = color 
+    library.accents.ImageColor = color
     library.accents.BorderColor = color
     library.accents.LightAccent = Color3.new(
         math.clamp(color.R + 0.1, 0, 1),
@@ -33,23 +33,19 @@ function library:update_accent(color)
     -- Update all UI elements using accents
     for _, obj in pairs(library.colored) do
         if obj.ClassName == "Frame" then
-            if obj.Name == "Line" or obj.Name == "SliderFrame" then
+            if obj.Name == "Line" then
                 obj.BackgroundColor3 = color
             end
             if obj.BorderMode == Enum.BorderMode.Outline then
                 obj.BorderColor3 = color
             end
         elseif obj.ClassName == "TextButton" or obj.ClassName == "TextLabel" then
-            if obj.Name ~= "ButtonText" then
-                obj.TextColor3 = color
-            end
+            obj.TextColor3 = color
         elseif obj.ClassName == "ImageLabel" or obj.ClassName == "ImageButton" then
             obj.ImageColor3 = color
-        elseif obj.ClassName == "ScrollingFrame" then
-            obj.ScrollBarImageColor3 = color
         elseif obj.ClassName == "UIGradient" then
             obj.Color = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, library.accents.LightAccent),
+                ColorSequenceKeypoint.new(0, library.accents.LightAccent), 
                 ColorSequenceKeypoint.new(1, library.accents.DarkAccent)
             }
         end
@@ -408,42 +404,41 @@ end
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
 
-            -- Hide all tabs
-            for _, OtherTab in pairs(Tabs:GetChildren()) do
-                if OtherTab:IsA("Frame") then
-                    OtherTab.BackgroundTransparency = 1
-                    OtherTab.Visible = false
+            -- Fade out old tab
+            for _, element in pairs(Tabs:GetChildren()) do
+                if element.Visible then
+                    library:tween(element, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                        BackgroundTransparency = 1
+                    })
                 end
             end
 
-            -- Update tab button colors
-            for _, TButtons in pairs(TabButtons:GetChildren()) do
-                if not TButtons:IsA("TextButton") then continue end
-                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2), 
-                    {ImageColor3 = Color3.fromRGB(100, 100, 100)})
-            end
-
-            -- Update selected tab and show new tab
-            selected_tab = TabButton
+            -- Fade in new tab
             Tab.BackgroundTransparency = 1
             Tab.Visible = true
-            
-            -- Update tab image color
-            library:tween(TabImage, TweenInfo.new(0.2), 
-                {ImageColor3 = Color3.fromRGB(84, 101, 255)})
+            library:tween(Tab, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                BackgroundTransparency = 0
+            })
 
-            -- Reset transparency for tab elements
+            -- Animate all elements in the new tab
             for _, element in pairs(Tab:GetDescendants()) do
-                    if element:IsA("Frame") then
-                    element.BackgroundTransparency = 0
-                elseif element:IsA("TextLabel") or element:IsA("TextButton") then
-                    if element.BackgroundTransparency == 1 then continue end
-                    element.BackgroundTransparency = 0
-                    element.TextTransparency = 0
+                if element:IsA("Frame") or element:IsA("TextLabel") or element:IsA("TextButton") then
+                    library:create_loading_animation(element, 0.3)
                 end
             end
-        end)
 
+            for _,TButtons in pairs (TabButtons:GetChildren()) do
+                if not TButtons:IsA("TextButton") then continue end
+
+                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(100, 100, 100)})
+            end
+            for _,Tab in pairs (Tabs:GetChildren()) do
+                Tab.Visible = false
+            end
+            Tab.Visible = true
+            selected_tab = TabButton
+            library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageColor3 = Color3.fromRGB(84, 101, 255)})
+        end)
         TabButton.MouseEnter:Connect(function()
             if selected_tab == TabButton then return end
 
@@ -993,15 +988,14 @@ end
 
                             local ColorPicker = library:create("ImageButton", {
                                 Name = "ColorPicker",
-                                BackgroundColor3 = Color3.fromRGB(25, 25, 25), -- Match background
+                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 40, 0, 10),
                                 Size = UDim2.new(0, 150, 0, 150),
                                 AutoButtonColor = false,
                                 Image = "rbxassetid://4155801252",
-                                ImageColor3 = library.accents.Accent,
+                                ImageColor3 = Color3.fromRGB(255, 0, 4),
                                 ZIndex = 2,
-                                TrackColor = true
                             }, ColorFrame)
 
                             local ColorPick = library:create("Frame", {
@@ -1014,14 +1008,13 @@ end
 
                             local HuePicker = library:create("TextButton", {
                                 Name = "HuePicker",
-                                BackgroundColor3 = library.accents.Accent,
+                                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 10, 0, 10),
                                 Size = UDim2.new(0, 20, 0, 150),
                                 ZIndex = 2,
                                 AutoButtonColor = false,
                                 Text = "",
-                                TrackColor = true
                             }, ColorFrame)
 
                             local UIGradient = library:create("UIGradient", {
@@ -1032,6 +1025,12 @@ end
                                     ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 0, 255)),
                                     ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
                                     ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 255, 0)),
+                                    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 255, 0)),
+                                    ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0))
+                                }
+                            }, HuePicker)
+
+                            local HuePick = library:create("ImageButton", {
                                 Name = "HuePick",
                                 BackgroundColor3 = Color3.fromRGB(255, 255, 255),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
