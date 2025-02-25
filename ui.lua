@@ -408,33 +408,38 @@ end
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
 
-            -- Change tab visibility without fading
-            for _, element in pairs(Tabs:GetChildren()) do
-                element.Visible = false
+            -- Hide all tabs
+            for _, OtherTab in pairs(Tabs:GetChildren()) do
+                if OtherTab:IsA("Frame") then
+                    OtherTab.BackgroundTransparency = 1
+                    OtherTab.Visible = false
+                end
             end
-
-            -- Set new tab visible
-            Tab.Visible = true 
 
             -- Update tab button colors
             for _, TButtons in pairs(TabButtons:GetChildren()) do
                 if not TButtons:IsA("TextButton") then continue end
-                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                library:tween(TButtons.ImageLabel, TweenInfo.new(0.2), 
                     {ImageColor3 = Color3.fromRGB(100, 100, 100)})
             end
 
-            -- Update selected tab
+            -- Update selected tab and show new tab
             selected_tab = TabButton
-            library:tween(TabImage, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+            Tab.BackgroundTransparency = 1
+            Tab.Visible = true
+            
+            -- Update tab image color
+            library:tween(TabImage, TweenInfo.new(0.2), 
                 {ImageColor3 = Color3.fromRGB(84, 101, 255)})
 
-            -- Animate new tab elements
+            -- Reset transparency for tab elements
             for _, element in pairs(Tab:GetDescendants()) do
-                if element:IsA("Frame") or element:IsA("TextLabel") or element:IsA("TextButton") then
-                    element.BackgroundTransparency = 1
-                    element.TextTransparency = 1
-                    library:tween(element, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                        {BackgroundTransparency = 0, TextTransparency = 0})
+                    if element:IsA("Frame") then
+                    element.BackgroundTransparency = 0
+                elseif element:IsA("TextLabel") or element:IsA("TextButton") then
+                    if element.BackgroundTransparency == 1 then continue end
+                    element.BackgroundTransparency = 0
+                    element.TextTransparency = 0
                 end
             end
         end)
