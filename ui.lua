@@ -1,17 +1,10 @@
 local library = {}
 
 library.accents = {
-    Accent = Color3.fromRGB(255, 50, 50),
+    Accent = Color3.fromRGB(84, 101, 255),
     LightAccent = Color3.fromRGB(79, 95, 239),
     DarkAccent = Color3.fromRGB(56, 67, 163)
 }
-
-function library:create_corner(parent, radius)
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, radius or 4)
-    corner.Parent = parent
-    return corner
-end
 
 function library:update_accent(color)
     library.accents.Accent = color
@@ -50,21 +43,19 @@ local uis = game:GetService("UserInputService")
 
 function library:create(Object, Properties, Parent)
     local Obj = Instance.new(Object)
-    
-    -- Add corners to specific elements
-    if Properties.NeedCorners and 
-        (Object == "Frame" or Object == "TextButton" or 
-         Object == "TextBox" or Object == "ImageButton") then
-        library:create_corner(Obj, Properties.CornerRadius)
-        Properties.NeedCorners = nil
-        Properties.CornerRadius = nil
-    end
 
-    -- Track elements for color updates
-    if Properties.TrackColor then
+    if Properties.Color and (
+        Properties.Color == Color3.fromRGB(84, 101, 255) or
+        Properties.Color == Color3.fromRGB(79, 95, 239) or
+        Properties.Color == Color3.fromRGB(56, 67, 163)
+    ) then
         if not library.colored then library.colored = {} end
         table.insert(library.colored, Obj)
-        Properties.TrackColor = nil
+    end
+    
+    if Properties.BorderColor3 and Properties.BorderColor3 == Color3.fromRGB(84, 101, 255) then
+        if not library.colored then library.colored = {} end
+        table.insert(library.colored, Obj)
     end
 
     for i,v in pairs (Properties) do
@@ -626,10 +617,7 @@ end
                             BackgroundColor3 = Color3.fromRGB(30, 30, 30),
                             BorderColor3 = Color3.fromRGB(0, 0, 0),
                             Position = UDim2.new(0, 9, 0.5, 0),
-                            Size = UDim2.new(0, 14, 0, 14),
-                            NeedCorners = true,
-                            CornerRadius = 7,
-                            TrackColor = true
+                            Size = UDim2.new(0, 9, 0, 9),
                         }, ToggleButton)
 
                         local ToggleText = library:create("TextLabel", {
@@ -649,10 +637,10 @@ end
                             menu.values[tab.tab_num][section_name][sector_name][flag] = value
 
                             if value.Toggle then
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = library.accents.Accent, Size = UDim2.new(0, 14, 0, 14)})
+                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(84, 101, 255)})
                                 library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(255, 255, 255)})
                             else
-                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 30), Size = UDim2.new(0, 14, 0, 14)})
+                                library:tween(ToggleFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundColor3 = Color3.fromRGB(30, 30, 30)})
                                 if not mouse_in then
                                     library:tween(ToggleText, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextColor3 = Color3.fromRGB(150, 150, 150)})
                                 end
@@ -912,12 +900,11 @@ end
                                 BackgroundColor3 = Color3.fromRGB(255, 28, 28),
                                 BorderColor3 = Color3.fromRGB(0, 0, 0),
                                 Position = UDim2.new(0, 265, 0.5, 0),
-                                Size = UDim2.new(0, 35, 0, 35), -- Made square
+                                Size = UDim2.new(0, 35, 0, 11),
                                 AutoButtonColor = false,
+                                Font = Enum.Font.Ubuntu,
                                 Text = "",
-                                NeedCorners = true,
-                                CornerRadius = 20, -- Makes it circular
-                                TrackColor = true
+                                TextXAlignment = Enum.TextXAlignment.Right,
                             }, ToggleButton)
 
                             local ColorFrame = library:create("Frame", {
@@ -1135,14 +1122,6 @@ end
                             function color:set_value(new_value, cb)
                                 extra_value = new_value and new_value or extra_value
                                 menu.values[tab.tab_num][section_name][sector_name][extra_flag] = extra_value
-
-                                local newColor = extra_value.Color
-                                ColorButton.BackgroundColor3 = newColor
-                                
-                                -- Update UI elements if this is the UI color picker
-                                if flag == "UI Color" then
-                                    library:update_accent(newColor)
-                                end
 
                                 local duplicate = Color3.new(extra_value.Color.R, extra_value.Color.G, extra_value.Color.B)
                                 color.h, color.s, color.v = duplicate:ToHSV()
