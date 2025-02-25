@@ -8,6 +8,13 @@ library.accents = {
     BorderColor = Color3.fromRGB(84, 101, 255)
 }
 
+local function safeCallback(callback, ...)
+    if type(callback) == "function" then
+        return callback(...)
+    end
+    return nil
+end
+
 function library:create_corner(parent, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or 4)
@@ -57,7 +64,15 @@ function library:update_accent(color)
 end
 
 local TweenService = game:GetService("TweenService")
-function library:tween(...) TweenService:Create(...):Play() end
+function library:tween(...)
+    local args = {...}
+    if #args < 2 then return end
+    
+    local instance = args[1]
+    if not instance or type(instance) ~= "userdata" then return end
+    
+    return TweenService:Create(...):Play()
+end
 
 local uis = game:GetService("UserInputService")
 
@@ -184,6 +199,13 @@ function library:create_loading_animation(element, delay)
 end
 
 function library.new(library_title, cfg_location)
+    if not library_title then 
+        library_title = "New Window"
+    end
+    if not cfg_location then
+        cfg_location = "config"
+    end
+
     local menu = {}
     menu.values = {}
     menu.on_load_cfg = library.signal.new("on_load_cfg")
@@ -634,7 +656,7 @@ end
 
                     local function do_callback()
                         menu.values[tab.tab_num][section_name][sector_name][flag] = value
-                        callback(value)
+                        safeCallback(callback, value)
                     end
 
                     local default = data.default and data.default
