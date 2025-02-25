@@ -408,11 +408,21 @@ end
         TabButton.MouseButton1Down:Connect(function()
             if selected_tab == TabButton then return end
 
-            -- Hide all tabs
+            -- Hide all other tabs first
             for _, OtherTab in pairs(Tabs:GetChildren()) do
                 if OtherTab:IsA("Frame") then
-                    OtherTab.BackgroundTransparency = 1
                     OtherTab.Visible = false
+                    -- Reset transparencies
+                    for _, element in pairs(OtherTab:GetDescendants()) do
+                        if element:IsA("Frame") then
+                            element.BackgroundTransparency = 0
+                        elseif element:IsA("TextLabel") or element:IsA("TextButton") then
+                            element.TextTransparency = 0
+                            if element.Name ~= "ButtonText" then
+                                element.BackgroundTransparency = 0
+                            end
+                        end
+                    end
                 end
             end
 
@@ -423,25 +433,11 @@ end
                     {ImageColor3 = Color3.fromRGB(100, 100, 100)})
             end
 
-            -- Update selected tab and show new tab
-            selected_tab = TabButton
-            Tab.BackgroundTransparency = 1
+            -- Show new tab and update selected
             Tab.Visible = true
-            
-            -- Update tab image color
+            selected_tab = TabButton
             library:tween(TabImage, TweenInfo.new(0.2), 
                 {ImageColor3 = Color3.fromRGB(84, 101, 255)})
-
-            -- Reset transparency for tab elements
-            for _, element in pairs(Tab:GetDescendants()) do
-                    if element:IsA("Frame") then
-                    element.BackgroundTransparency = 0
-                elseif element:IsA("TextLabel") or element:IsA("TextButton") then
-                    if element.BackgroundTransparency == 1 then continue end
-                    element.BackgroundTransparency = 0
-                    element.TextTransparency = 0
-                end
-            end
         end)
 
         TabButton.MouseEnter:Connect(function()
@@ -900,7 +896,7 @@ end
                             end)
                             uis.InputEnded:Connect(function(input)
                                 if extra_value.Key ~= nil and not is_binding then
-                                    local key = input.KeyCode.Name ~= "Unknown" and input.KeyCode.Name or input.UserInputType.Name
+                                    local key = input.KeyCode.Name ~= "Unknown" and input.UserInputType.Name or input.UserInputType.Name
                                     if key == extra_value.Key then
                                         if extra_value.Type == "Hold" then
                                             extra_value.Active = false
