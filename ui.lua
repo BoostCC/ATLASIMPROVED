@@ -1,7 +1,7 @@
 local library = {}
 
 library.accents = {
-    Accent = Color3.fromRGB(84, 101, 255),
+    Accent = Color3.fromRGB(255, 50, 50),
     LightAccent = Color3.fromRGB(79, 95, 239),
     DarkAccent = Color3.fromRGB(56, 67, 163)
 }
